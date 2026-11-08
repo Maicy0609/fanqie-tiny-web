@@ -283,20 +283,26 @@ route('shelf', async (/** @type {HTMLElement} */ root, /** @type {any} */ ctx) =
     root.append(emptyState({ icon: 'bookmarks', title: '书架还是空的', text: '在书籍详情页点「加入书架」，这里就会留下它。', action: h('a', { class: 'act primary', href: '#/' }, '去首页逛逛') }));
     return;
   }
-  const grid = h('div', { class: 'grid-books' });
+  const list = h('div', { class: 'shelf-list' });
   for (const item of items) {
     const progress = progressOf(item.id);
-    const card = h('div', { style: { position: 'relative' } },
-      bookCard(bookOf(item), { progress: progress ? '读至 ' + progress.pct + '%' : '' }),
+    const row = h('div', { class: 'shelf-item' },
+      h('a', { class: 'shelf-link', href: '#/book/' + item.id },
+        h('div', { class: 'shelf-cover' }, image(item.cover, item.name), h('span', { class: 'cover-fallback' }, item.name || '书')),
+        h('div', { class: 'shelf-meta' },
+          h('strong', null, item.name || '未命名'),
+          h('small', null, item.author || ''),
+          progress ? h('span', { class: 'tag', style: { marginTop: '6px' } }, '读至 ' + progress.pct + '%') : null,
+        ),
+      ),
       h('button', {
         class: 'icon-btn', type: 'button', title: '移出书架', 'aria-label': '移出书架',
-        style: { position: 'absolute', right: '-6px', top: '-6px', background: 'var(--surface-container-high)', width: '32px', height: '32px', minWidth: '32px' },
-        onclick: () => { const book = bookOf(item); const now = shelfItems().filter((/** @type {any} */ x) => x.id !== book.id); writeStore('shelf', now); card.remove(); toast('已移出书架'); if (!now.length) go('#/shelf', true); },
-      }, h('i', { style: { fontSize: '18px' } }, 'close')),
+        onclick: () => { writeStore('shelf', shelfItems().filter((x) => x.id !== item.id)); row.remove(); toast('已移出书架'); if (!shelfItems().length) go('#/shelf', true); },
+      }, h('i', null, 'close')),
     );
-    grid.append(card);
+    list.append(row);
   }
-  root.append(grid);
+  root.append(list);
 
   async function clearShelf() {
     if (!(await confirmDialog('清空书架？', '只删除本机的收藏记录，不影响账号。', '清空'))) return;

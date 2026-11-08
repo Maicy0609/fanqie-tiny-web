@@ -320,7 +320,7 @@ async def main() -> int:
                 await button.click()
             await page.goto(web + "/#/shelf", wait_until="domcontentloaded")
             await page.wait_for_timeout(400)
-            check(await page.locator(".book-card").count() == 1, "shelf keeps the book")
+            check(await page.locator(".shelf-item").count() == 1, "shelf keeps the book")
 
             print("settings")
             await page.goto(web + "/#/settings", wait_until="domcontentloaded")
