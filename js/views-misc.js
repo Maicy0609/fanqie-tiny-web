@@ -230,7 +230,7 @@ route('shuqi-read', async (/** @type {HTMLElement} */ root, /** @type {any} */ c
   ctx.title('书旗阅读');
   const titleNode = h('div', { class: 'title' }, '载入中…');
   const bar = h('div', { class: 'reader-bar' },
-    h('a', { class: 'icon-btn', href: '#/shuqi/' + bookId, 'aria-label': '返回目录' }, h('i', null, 'arrow_back')),
+    h('button', { class: 'icon-btn', type: 'button', 'aria-label': '返回目录', onclick: () => go('#/shuqi/' + bookId, true) }, h('i', null, 'arrow_back')),
     titleNode,
     h('button', { class: 'icon-btn', type: 'button', title: '复制链接', onclick: () => copy(location.href) }, h('i', null, 'link')),
   );
@@ -359,14 +359,16 @@ route('settings', async (/** @type {HTMLElement} */ root, /** @type {any} */ ctx
   root.append(grid);
 
   /* server */
-  const baseInput = h('input', { type: 'text', value: cfg.base, placeholder: '留空 = 同源（推荐）', spellcheck: 'false' });
-  const tokenInput = h('input', { type: 'password', value: cfg.token, placeholder: 'Bearer token', spellcheck: 'false', autocomplete: 'off' });
+  const baseInput = h('input', { type: 'text', value: cfg.base, placeholder: ' ', spellcheck: 'false' });
+  const tokenInput = h('input', { type: 'password', value: cfg.token, placeholder: ' ', spellcheck: 'false', autocomplete: 'off' });
   const status = h('div', { class: 'kv' }, h('span', null, '状态'), h('span', null, '未检测'));
   const serverCard = h('div', { class: 'card' },
     h('h2', null, '服务器'),
     h('p', { class: 'hint' }, '默认走当前页面同源的 Rust 反代（/api、/src）。也可以填 http://host:18921 直连。'),
     h('div', { class: 'field' }, baseInput, h('label', null, 'API 地址')),
+    h('div', { class: 'field-hint' }, '留空 = 同源（推荐），也可以填 http://host:18921'),
     h('div', { class: 'field' }, tokenInput, h('label', null, '访问令牌')),
+    h('div', { class: 'field-hint' }, '与后端 --token 一致，只保存在这台设备'),
     status,
     h('div', { class: 'chip-row', style: { marginTop: '14px' } },
       h('button', { class: 'act primary', type: 'button', onclick: saveServer }, h('i', null, 'save'), '保存'),
@@ -465,9 +467,9 @@ async function healthCheck() {
 
 route('account', async (/** @type {HTMLElement} */ root, /** @type {any} */ ctx) => {
   ctx.title('账号采集');
-  const cookie = h('textarea', { rows: 4, placeholder: '粘贴番茄小说的 Cookie（只存在当前页面内存）', 'aria-label': 'Cookie' });
-  const resource = h('input', { type: 'text', value: 'shelf', placeholder: 'resource' });
-  const offset = h('input', { type: 'number', value: '0', placeholder: 'offset' });
+  const cookie = h('textarea', { rows: 4, placeholder: ' ', 'aria-label': 'Cookie' });
+  const resource = h('input', { type: 'text', value: 'shelf', placeholder: ' ' });
+  const offset = h('input', { type: 'number', value: '0', placeholder: ' ' });
   const result = h('div', { class: 'code-box', style: { marginTop: '14px' } }, '结果会显示在这里。');
   const target = cfg.base || location.host;
 
@@ -632,12 +634,12 @@ function devItem(ep) {
   const fields = {};
   const inputs = h('div', { class: 'row' });
   for (const key of placeholders) {
-    const input = h('input', { type: 'text', placeholder: key, 'aria-label': key });
+    const input = h('input', { type: 'text', placeholder: ' ', 'aria-label': key });
     fields[key] = input;
     inputs.append(h('div', { class: 'field' }, input, h('label', null, key)));
   }
   for (const key of (ep.q || []).filter((/** @type {any} */ key) => !placeholders.includes(key))) {
-    const input = h('input', { type: 'text', placeholder: key, 'aria-label': key });
+    const input = h('input', { type: 'text', placeholder: ' ', 'aria-label': key });
     fields[key] = input;
     inputs.append(h('div', { class: 'field' }, input, h('label', null, key)));
   }

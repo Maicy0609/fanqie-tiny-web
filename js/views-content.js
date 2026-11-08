@@ -237,7 +237,7 @@ function rankGrid(books) {
   books.forEach((book, index) => {
     wrap.append(h('a', { class: 'rank-item', href: '#/book/' + book.id },
       h('div', { class: 'idx' }, index + 1),
-      image(book.cover, book.name),
+      h('div', { class: 'rank-thumb' }, image(book.cover, book.name), h('span', { class: 'shot-fallback' }, (book.name || '书').slice(0, 1))),
       h('div', { class: 'r-meta' },
         h('strong', null, book.name),
         h('small', null, [book.author, book.readText].filter(Boolean).join(' · ')),
@@ -694,6 +694,13 @@ route('book', async (/** @type {HTMLElement} */ root, /** @type {any} */ ctx) =>
 
 const chapterCache = new Map();
 
+/** Leave the reader without stacking a duplicate book entry. */
+function leaveReader(/** @type {string} */ fallback) {
+  const before = location.hash;
+  history.back();
+  setTimeout(() => { if (location.hash === before) go(fallback, true); }, 260);
+}
+
 route('read', async (/** @type {HTMLElement} */ root, /** @type {any} */ ctx) => {
   const bookId = ctx.params[0] || '';
   const itemId = ctx.params[1] || '';
@@ -702,7 +709,7 @@ route('read', async (/** @type {HTMLElement} */ root, /** @type {any} */ ctx) =>
 
   const titleBar = h('div', { class: 'title' }, '载入中…');
   const bar = h('div', { class: 'reader-bar' },
-    h('a', { class: 'icon-btn', href: '#/book/' + bookId, 'aria-label': '返回书籍' }, h('i', null, 'arrow_back')),
+    h('button', { class: 'icon-btn', type: 'button', 'aria-label': '返回', onclick: () => leaveReader('#/book/' + bookId) }, h('i', null, 'arrow_back')),
     titleBar,
     h('button', { class: 'icon-btn', type: 'button', title: '目录', onclick: openToc }, h('i', null, 'format_list_bulleted')),
     h('button', { class: 'icon-btn', type: 'button', title: '章评', onclick: openChapterComments }, h('i', null, 'forum')),
@@ -758,12 +765,12 @@ route('read', async (/** @type {HTMLElement} */ root, /** @type {any} */ ctx) =>
     if (indexOf < 0 || !toc.length) return;
     const next = toc[indexOf + delta];
     if (!next) { toast(delta > 0 ? '已经是最后一章' : '已经是第一章'); return; }
-    go('#/read/' + bookId + '/' + next.item_id);
+    go('#/read/' + bookId + '/' + next.item_id, true);
   }
 
   function openToc() {
     if (!toc.length) { toast('目录还没加载好'); return; }
-    const input = h('input', { type: 'search', placeholder: '搜索章节', 'aria-label': '搜索章节' });
+    const input = h('input', { class: 'search-input', type: 'search', placeholder: '搜索章节', 'aria-label': '搜索章节', style: { marginBottom: '8px' } });
     const list = h('div', { class: 'toc', style: { maxHeight: '52vh', overflow: 'auto' } });
     const draw = () => {
       const word = input.value.trim();

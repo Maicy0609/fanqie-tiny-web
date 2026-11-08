@@ -341,8 +341,11 @@ export function image(src, alt, cls = '') {
   const img = h('img', { alt, class: cls, loading: 'lazy', decoding: 'async' });
   const value = mediaUrl(src);
   if (!value) { img.hidden = true; return img; }
+  const reveal = () => img.classList.add('loaded');
   if (/^(https?:\/\/|\/)/i.test(value)) img.src = value;
-  img.addEventListener('error', () => { img.style.opacity = '0'; img.dataset.failed = '1'; }, { once: true });
+  if (img.complete && img.naturalWidth > 0) reveal();
+  img.addEventListener('load', reveal, { once: true });
+  img.addEventListener('error', () => { img.dataset.failed = '1'; img.hidden = true; }, { once: true });
   return img;
 }
 
@@ -560,8 +563,12 @@ export function parseHash() {
 
 /** @param {string} hash @param {boolean} [replace] */
 export function go(hash, replace = false) {
-  if (replace) history.replaceState(null, '', hash);
-  else location.hash = hash;
+  if (replace) {
+    history.replaceState(null, '', hash);
+    render();
+  } else {
+    location.hash = hash;
+  }
 }
 
 /** @type {Record<string,string>} */
