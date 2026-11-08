@@ -1,0 +1,25 @@
+{
+ "code": 0,
+ "data": {
+  "item_data_list": [
+   {
+    "item_id": "2001",
+    "title": "第1章 开始",
+    "volume_name": "第一卷",
+    "chapter_word_number": 1000
+   },
+   {
+    "item_id": "2002",
+    "title": "第2章 继续",
+    "volume_name": "第一卷",
+    "chapter_word_number": 1000
+   },
+   {
+    "item_id": "2003",
+    "title": "第3章 终局",
+    "volume_name": "第二卷",
+    "chapter_word_number": 1000
+   }
+  ]
+ }
+}

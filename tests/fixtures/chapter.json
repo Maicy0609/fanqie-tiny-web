@@ -1,0 +1,9 @@
+{
+ "code": 0,
+ "data": {
+  "title": "第1章 开始",
+  "content": "<?xml version=\"1.0\"?><html><body><h1>第1章 开始</h1><p idx=\"0\">第一段测试文字。</p><p idx=\"1\">第二段测试文字。</p><p idx=\"2\">第三段测试文字。</p></body></html>",
+  "paragraphs_num": 3,
+  "author_speak": ""
+ }
+}

@@ -1,0 +1,14 @@
+{
+ "source": "shuqi",
+ "data": {
+  "bookId": "34078",
+  "name": "测试书旗书",
+  "author": "书旗作者",
+  "coverUrl": "",
+  "intro": "书旗简介",
+  "kind": "仙侠",
+  "wordCount": "10万字",
+  "status": "完结",
+  "chapterTotalNum": 2
+ }
+}

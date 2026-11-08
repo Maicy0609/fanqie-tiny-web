@@ -1,0 +1,34 @@
+{
+ "code": 0,
+ "data": {
+  "video_data": {
+   "series_id": "5000",
+   "vid": "5001",
+   "title": "测试短剧",
+   "cover": "",
+   "horiz_cover": "",
+   "episode_cnt": 2,
+   "episode": true,
+   "duration": 120,
+   "series_play_cnt": 12345,
+   "series_intro": "一部用于测试的短剧。",
+   "series_color_hex": "#552211",
+   "video_list": [
+    {
+     "vid": "5001",
+     "title": "第1集",
+     "duration": 60,
+     "cover": "",
+     "vid_index": 0
+    },
+    {
+     "vid": "5002",
+     "title": "第2集",
+     "duration": 60,
+     "cover": "",
+     "vid_index": 1
+    }
+   ]
+  }
+ }
+}

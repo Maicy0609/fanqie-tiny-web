@@ -1,0 +1,18 @@
+{
+ "code": 0,
+ "data": [
+  {
+   "cell_alias": "实时",
+   "search_tag_data": [
+    {
+     "tag_title": "热搜一",
+     "recommend_info": "热聊"
+    },
+    {
+     "tag_title": "热搜二",
+     "recommend_info": "巅峰榜"
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,43 @@
+{
+ "code": 0,
+ "data": {
+  "data": {
+   "0": {
+    "count": 1,
+    "infos": [
+     {
+      "comment": {
+       "comment_id": "c1",
+       "common": {
+        "comment_type": 0,
+        "content": {
+         "text": "这是一条测试评论"
+        },
+        "create_timestamp": 1700000000,
+        "user_info": {
+         "base_info": {
+          "user_name": "书友甲",
+          "user_avatar": ""
+         }
+        }
+       },
+       "stat": {
+        "digg_count": 7,
+        "reply_count": 2
+       },
+       "user_action": {
+        "user_digg": false
+       }
+      }
+     }
+    ],
+    "bubble_data": {}
+   },
+   "1": {
+    "count": 0,
+    "infos": [],
+    "bubble_data": {}
+   }
+  }
+ }
+}

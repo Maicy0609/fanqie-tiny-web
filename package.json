@@ -1,0 +1,13 @@
+{
+  "name": "fanqie-tiny-web",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Fanqie tiny web client",
+  "scripts": {
+    "check": "tsc -p tsconfig.json",
+    "smoke": "python3 tests/smoke.py"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.0"
+  }
+}

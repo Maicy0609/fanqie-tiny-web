@@ -1,0 +1,217 @@
+{
+ "code": 0,
+ "message": "SUCCESS",
+ "data": {
+  "tab_index": 0,
+  "tab_item": [
+   {
+    "tab_type": 2,
+    "title": "推荐",
+    "session_id": "s1",
+    "has_more": true,
+    "next_offset": 2,
+    "cell_data": [
+     {
+      "cell_name": "排行榜",
+      "cell_alias": "实时热度",
+      "cell_id": "7001",
+      "cell_data": [
+       {
+        "book_data": [
+         {
+          "book_id": "1001",
+          "book_name": "测试之书",
+          "author": "测试作者",
+          "author_id": "42",
+          "thumb_url": "https://cdn.test/cover.jpg",
+          "abstract": "这是一本用于冒烟测试的书。\n第二段简介。",
+          "score": "9.2",
+          "tags": "玄幻,热血",
+          "read_cnt_text": "12.3万人在读",
+          "word_number": 123456,
+          "chapter_number": 3,
+          "creation_status": "1",
+          "color_dominate": "#334455",
+          "first_chapter_item_id": "2001",
+          "last_chapter_title": "第3章 终局",
+          "forum_id": "9001"
+         }
+        ]
+       },
+       {
+        "book_data": [
+         {
+          "book_id": "1002",
+          "book_name": "第二本书",
+          "author": "另一位作者",
+          "author_id": "43",
+          "thumb_url": "",
+          "abstract": "这是一本用于冒烟测试的书。\n第二段简介。",
+          "score": "8.8",
+          "tags": "玄幻,热血",
+          "read_cnt_text": "12.3万人在读",
+          "word_number": 123456,
+          "chapter_number": 3,
+          "creation_status": "1",
+          "color_dominate": "#334455",
+          "first_chapter_item_id": "2001",
+          "last_chapter_title": "第3章 终局",
+          "forum_id": "9001"
+         }
+        ]
+       },
+       {
+        "book_data": [
+         {
+          "book_id": "1003",
+          "book_name": "第三本书",
+          "author": "测试作者",
+          "author_id": "42",
+          "thumb_url": "https://cdn.test/cover.jpg",
+          "abstract": "这是一本用于冒烟测试的书。\n第二段简介。",
+          "score": "9.2",
+          "tags": "玄幻,热血",
+          "read_cnt_text": "12.3万人在读",
+          "word_number": 123456,
+          "chapter_number": 3,
+          "creation_status": "1",
+          "color_dominate": "#334455",
+          "first_chapter_item_id": "2001",
+          "last_chapter_title": "第3章 终局",
+          "forum_id": "9001"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "cell_name": "猜你喜欢",
+      "cell_data": [
+       {
+        "cell_data": [
+         {
+          "book_data": [
+           {
+            "book_id": "1002",
+            "book_name": "第二本书",
+            "author": "另一位作者",
+            "author_id": "43",
+            "thumb_url": "",
+            "abstract": "这是一本用于冒烟测试的书。\n第二段简介。",
+            "score": "8.8",
+            "tags": "玄幻,热血",
+            "read_cnt_text": "12.3万人在读",
+            "word_number": 123456,
+            "chapter_number": 3,
+            "creation_status": "1",
+            "color_dominate": "#334455",
+            "first_chapter_item_id": "2001",
+            "last_chapter_title": "第3章 终局",
+            "forum_id": "9001"
+           }
+          ]
+         },
+         {
+          "book_data": [
+           {
+            "book_id": "1001",
+            "book_name": "测试之书",
+            "author": "测试作者",
+            "author_id": "42",
+            "thumb_url": "https://cdn.test/cover.jpg",
+            "abstract": "这是一本用于冒烟测试的书。\n第二段简介。",
+            "score": "9.2",
+            "tags": "玄幻,热血",
+            "read_cnt_text": "12.3万人在读",
+            "word_number": 123456,
+            "chapter_number": 3,
+            "creation_status": "1",
+            "color_dominate": "#334455",
+            "first_chapter_item_id": "2001",
+            "last_chapter_title": "第3章 终局",
+            "forum_id": "9001"
+           }
+          ]
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "cell_name": "正在热播",
+      "cell_data": [
+       {
+        "video_data": [
+         {
+          "series_id": "5000",
+          "vid": "5001",
+          "title": "测试短剧",
+          "cover": "",
+          "horiz_cover": "",
+          "episode_cnt": 2,
+          "episode": true,
+          "duration": 120,
+          "series_play_cnt": 12345,
+          "series_intro": "一部用于测试的短剧。",
+          "series_color_hex": "#552211",
+          "video_list": [
+           {
+            "vid": "5001",
+            "title": "第1集",
+            "duration": 60,
+            "cover": "",
+            "vid_index": 0
+           },
+           {
+            "vid": "5002",
+            "title": "第2集",
+            "duration": 60,
+            "cover": "",
+            "vid_index": 1
+           }
+          ]
+         }
+        ]
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "tab_type": 25,
+    "title": "小说",
+    "session_id": "s1",
+    "has_more": false,
+    "cell_data": [
+     {
+      "cell_name": "小说精选",
+      "cell_data": [
+       {
+        "book_data": [
+         {
+          "book_id": "1002",
+          "book_name": "第二本书",
+          "author": "另一位作者",
+          "author_id": "43",
+          "thumb_url": "",
+          "abstract": "这是一本用于冒烟测试的书。\n第二段简介。",
+          "score": "8.8",
+          "tags": "玄幻,热血",
+          "read_cnt_text": "12.3万人在读",
+          "word_number": 123456,
+          "chapter_number": 3,
+          "creation_status": "1",
+          "color_dominate": "#334455",
+          "first_chapter_item_id": "2001",
+          "last_chapter_title": "第3章 终局",
+          "forum_id": "9001"
+         }
+        ]
+       }
+      ]
+     }
+    ]
+   }
+  ]
+ }
+}

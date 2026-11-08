@@ -1,0 +1,13 @@
+{
+ "code": 0,
+ "data": [
+  {
+   "item_id": "3002",
+   "main_url": "/src/a.m4a",
+   "is_encrypt": true,
+   "encryption_key": "abc",
+   "quality": 48,
+   "duration": 600
+  }
+ ]
+}

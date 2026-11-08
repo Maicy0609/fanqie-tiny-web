@@ -1,0 +1,8 @@
+node_modules/
+server/target/
+.ref/
+__pycache__/
+*.pyc
+server/fanqie-tiny-server
+tests/screenshots/
+.DS_Store

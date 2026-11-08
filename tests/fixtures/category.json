@@ -1,0 +1,20 @@
+{
+ "code": 0,
+ "data": {
+  "down_category": [
+   {
+    "id": 1,
+    "name": "玄幻",
+    "cover": "",
+    "book_num": 12,
+    "description": ""
+   },
+   {
+    "id": 2,
+    "name": "都市",
+    "cover": "",
+    "book_num": 8
+   }
+  ]
+ }
+}

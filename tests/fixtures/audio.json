@@ -1,0 +1,14 @@
+{
+ "code": 0,
+ "data": {
+  "book_id": "3001",
+  "book_name": "测试有声书",
+  "author": "主播甲",
+  "thumb_url": "",
+  "chapter_number": 2,
+  "duration": 600,
+  "tags": "",
+  "score": "9.0",
+  "creation_status": "1"
+ }
+}
