@@ -5,9 +5,9 @@
 /** @typedef {{params:Record<string,string>,query:URLSearchParams,signal:AbortSignal,title:(t:string)=>void}} ViewCtx */
 
 const LS = 'fq.';
-const DEFAULT_CONFIG = { base: '', token: '', theme: 'auto', accent: 'tomato', scale: 1, line: 1.9, paper: 'paper' };
+const DEFAULT_CONFIG = { base: '', token: '', theme: 'auto', scale: 1.05, line: 1.9, paper: 'paper' };
 
-/** @type {{base:string,token:string,theme:string,accent:string,scale:number,line:number,paper:string}} */
+/** @type {{base:string,token:string,theme:string,scale:number,line:number,paper:string}} */
 export const cfg = loadConfig();
 
 /** @param {string} key @param {any} fallback */
@@ -250,30 +250,6 @@ export function mediaUrl(path) {
   return base + value + (value.includes('?') ? '&' : '?') + 'token=' + encodeURIComponent(cfg.token);
 }
 
-/**
- * @param {{signal?:AbortSignal}} [opts]
- * @returns {Promise<{health:any,ready:any,devices:number}>}
- */
-export async function health(opts = {}) {
-  const base = cfg.base ? cfg.base.replace(/\/+$/, '') : '';
-  const get = async (/** @type {string} */ path) => {
-    try {
-      const res = await fetch(base + path, { signal: opts.signal || AbortSignal.timeout(5000) });
-      const data = await res.json().catch(() => ({}));
-      return { status: res.status, data };
-    } catch (err) {
-      if (err instanceof DOMException && err.name === 'AbortError') throw err;
-      return { status: 0, data: null };
-    }
-  };
-  const [h, r] = await Promise.all([get('/healthz'), get('/readyz')]);
-  return {
-    health: h.data,
-    ready: r.data,
-    devices: r.data && typeof r.data.devices === 'number' ? r.data.devices : 0,
-  };
-}
-
 /* ---------- adapters ---------- */
 
 /** @param {any} raw @returns {Book} */
@@ -366,7 +342,7 @@ export function image(src, alt, cls = '') {
   const value = mediaUrl(src);
   if (!value) { img.hidden = true; return img; }
   if (/^(https?:\/\/|\/)/i.test(value)) img.src = value;
-  img.addEventListener('error', () => { img.style.opacity = '0'; }, { once: true });
+  img.addEventListener('error', () => { img.style.opacity = '0'; img.dataset.failed = '1'; }, { once: true });
   return img;
 }
 
@@ -392,11 +368,27 @@ export function seriesCard(series) {
   return h('a', { class: 'series-card', href: '#/series/' + series.id },
     h('div', { class: 'shot' },
       image(series.cover, series.title),
+      h('span', { class: 'shot-fallback' }, series.title || '短剧'),
       h('span', { class: 'count' }, series.episodes ? series.episodes + ' 集' : '短剧'),
       h('span', { class: 'play' }, h('i', null, 'play_arrow')),
     ),
     h('strong', null, series.title),
     h('small', null, [series.playText, series.intro ? trim(series.intro, 24) : ''].filter(Boolean).join(' · ')),
+  );
+}
+
+/** @param {Series} series */
+export function seriesRow(series) {
+  return h('a', { class: 'series-row', href: '#/series/' + series.id },
+    h('div', { class: 'thumb' },
+      image(series.cover, series.title),
+      h('span', { class: 'shot-fallback' }, series.title || '短剧'),
+    ),
+    h('div', { class: 'txt' },
+      h('strong', null, series.title),
+      h('small', null, [series.playText, series.episodes ? series.episodes + ' 集' : ''].filter(Boolean).join(' · ')),
+      series.intro ? h('p', null, trim(series.intro, 60)) : null,
+    ),
   );
 }
 
@@ -587,6 +579,7 @@ export async function render() {
   if (cleanup) { try { cleanup(); } catch (_) { /* ignore */ } cleanup = null; }
 
   resetPaper();
+  el('snackbar').classList.remove('active');
   clear(view);
   view.classList.remove('view-enter');
   void view.offsetWidth;
@@ -600,8 +593,12 @@ export async function render() {
     if (active) link.setAttribute('aria-current', 'page');
     else link.removeAttribute('aria-current');
   }
-  const back = el('back');
-  back.hidden = parsed.name === 'home';
+  const isHome = parsed.name === 'home';
+  el('back').hidden = isHome;
+  el('brand').hidden = !isHome;
+  el('search-form').hidden = !isHome;
+  el('page-title').hidden = isHome;
+  el('page-title').textContent = '';
   /** @type {HTMLInputElement} */ (el('global-search')).value = parsed.query.get('q') || '';
 
   /** @type {ViewCtx} */
@@ -609,7 +606,11 @@ export async function render() {
     params: parsed.params,
     query: parsed.query,
     signal: controller.signal,
-    title: (text) => { document.title = text ? text + ' · 番茄小站' : '番茄小站'; },
+    title: (text) => {
+      document.title = text ? text + ' · 番茄小站' : '番茄小站';
+      el('page-title').textContent = text || '';
+      el('page-title').hidden = isHome || !text;
+    },
   };
 
   try {
@@ -631,11 +632,10 @@ export function applyTheme() {
   const dark = cfg.theme === 'dark' || (cfg.theme === 'auto' && media.matches);
   document.body.classList.toggle('dark', dark);
   document.body.classList.toggle('light', !dark);
-  document.documentElement.dataset.accent = cfg.accent;
   const icon = qs('#theme-btn i');
   if (icon) icon.textContent = dark ? 'light_mode' : 'dark_mode';
   const meta = qs('meta[name="theme-color"]');
-  if (meta) meta.setAttribute('content', dark ? '#121110' : '#FDFBF8');
+  if (meta) meta.setAttribute('content', dark ? '#151311' : '#FAF7F2');
 }
 
 export function cycleTheme() {
@@ -704,37 +704,38 @@ export async function confirmDialog(title, text, ok = '确定') {
   return value === 'ok';
 }
 
-/* ---------- shell ---------- */
-
-let healthTimer = 0;
-
-export async function refreshHealth() {
-  const node = el('conn');
-  node.className = 'conn wait';
-  qs('.conn-text', node).textContent = '检查中';
-  try {
-    const result = await health();
-    const text = qs('.conn-text', node);
-    if (result.ready && result.ready.status === 'ok') {
-      node.className = 'conn ok';
-      text.textContent = '在线 · ' + result.devices;
-      node.title = '服务端就绪，设备池 ' + result.devices + ' 个';
-    } else if (result.health && result.health.status === 'ok') {
-      node.className = 'conn wait';
-      text.textContent = '启动中';
-      node.title = '服务端正在注册设备，稍等约 20 秒';
-    } else {
-      node.className = 'conn bad';
-      text.textContent = '离线';
-      node.title = '连不上服务端，请检查设置';
-    }
-  } catch (_) {
-    node.className = 'conn bad';
-    qs('.conn-text', node).textContent = '离线';
-  }
-  clearTimeout(healthTimer);
-  healthTimer = window.setTimeout(refreshHealth, 30000);
+/**
+ * Non-modal sheet: the page stays readable behind it.
+ * @param {{title:string, body:Node}} spec
+ */
+export function openSheet(spec) {
+  const panel = h('div', { class: 'sheet', role: 'dialog', 'aria-modal': 'false', 'aria-label': spec.title });
+  panel.append(
+    h('button', { class: 'icon-btn sheet-close', type: 'button', 'aria-label': '关闭', onclick: () => close() }, h('i', null, 'close')),
+    h('h2', null, spec.title),
+    spec.body,
+  );
+  document.body.append(panel);
+  requestAnimationFrame(() => panel.classList.add('open'));
+  let closed = false;
+  const close = () => {
+    if (closed) return;
+    closed = true;
+    panel.classList.remove('open');
+    document.removeEventListener('keydown', onKey);
+    document.removeEventListener('pointerdown', onOutside, true);
+    setTimeout(() => panel.remove(), 240);
+  };
+  const onKey = (/** @type {KeyboardEvent} */ event) => { if (event.key === 'Escape') close(); };
+  const onOutside = (/** @type {PointerEvent} */ event) => {
+    if (!panel.contains(/** @type {Node} */ (event.target))) close();
+  };
+  document.addEventListener('keydown', onKey);
+  setTimeout(() => document.addEventListener('pointerdown', onOutside, true), 0);
+  return { close, panel };
 }
+
+/* ---------- shell ---------- */
 
 function bindShell() {
   const form = el('search-form');
@@ -774,7 +775,6 @@ function bindShell() {
 export function start() {
   bindShell();
   applyTheme();
-  refreshHealth();
   render();
   document.documentElement.dataset.ready = '1';
 }

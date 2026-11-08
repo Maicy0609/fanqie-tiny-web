@@ -21,9 +21,9 @@ function commentPanel(seriesId, vid) {
   const latestChip = h('button', { class: 'chip active', type: 'button', onclick: () => setMode(false) }, '最新');
   const hotChip = h('button', { class: 'chip', type: 'button', onclick: () => setMode(true) }, '热门');
   const head = h('div', { class: 'section-head' }, h('h2', null, '剧评'), h('div', { class: 'chip-row' }, latestChip, hotChip), count);
-  const textarea = h('textarea', { rows: 2, placeholder: '说点什么…', 'aria-label': '写剧评' });
+  const textarea = h('textarea', { class: 'composer-input', rows: 2, placeholder: '说点什么…', 'aria-label': '写剧评' });
   const composer = h('div', { class: 'comment-composer' },
-    h('div', { class: 'field label border' }, textarea, h('label', null, '写剧评')),
+    textarea,
     h('button', { class: 'act primary', type: 'button', onclick: submit }, h('i', null, 'send'), '发布'),
   );
   const wrap = h('section', null, head, composer, listHost);
@@ -82,10 +82,10 @@ function commentPanel(seriesId, vid) {
   }
 
   async function reply(/** @type {any} */ comment) {
-    const input = h('textarea', { rows: 3, placeholder: '回复 @' + comment.user, 'aria-label': '回复内容' });
+    const input = h('textarea', { class: 'composer-input', rows: 3, placeholder: '回复 @' + comment.user, 'aria-label': '回复内容' });
     const value = await openDialog({
       title: '回复 ' + comment.user,
-      body: h('div', { class: 'field label border' }, input, h('label', null, '回复内容')),
+      body: input,
       actions: [{ label: '取消', value: '' }, { label: '发送', value: 'send', primary: true }],
     });
     if (value !== 'send' || !input.value.trim()) return;
@@ -140,26 +140,26 @@ route('series', async (/** @type {HTMLElement} */ root, /** @type {any} */ ctx) 
         if (url) series.cover = url;
       } catch (_) { /* 海报取不到就退回占位 */ }
     }
-    ctx.title(series.title);
+    ctx.title('短剧');
 
     const first = episodes[0] || raw;
-    const hero = h('section', { class: 'detail-hero', style: { '--tint': safeColor(series.color) } },
-      h('div', { class: 'detail-top' },
-        h('div', { class: 'detail-cover', style: { aspectRatio: '16 / 9', flexBasis: 'clamp(180px, 30vw, 320px)' } }, image(series.cover, series.title)),
-        h('div', { class: 'detail-main' },
-          h('span', { class: 'tag primary' }, '短剧'),
-          h('h1', { style: { marginTop: '8px' } }, series.title),
-          h('div', { class: 'detail-stats' },
-            series.episodes ? h('span', null, h('b', null, series.episodes), ' 集') : null,
-            series.duration ? h('span', null, '共 ' + dur(series.duration)) : null,
-            series.playText ? h('span', null, series.playText) : null,
-          ),
-          h('p', { class: 'prose', style: { maxWidth: '62ch' } }, trim(series.intro, 220)),
-          h('div', { class: 'detail-actions' },
-            first && first.vid ? h('a', { class: 'act primary', href: '#/watch/' + id + '/' + first.vid }, h('i', null, 'play_arrow'), '开始播放') : null,
-            h('button', { class: 'act ghost', type: 'button', onclick: () => share(id) }, h('i', null, 'share'), '分享'),
-            h('a', { class: 'act ghost', href: '#/dev' }, h('i', null, 'terminal'), '接口'),
-          ),
+    const hero = h('section', { class: 'detail-panel series', style: { '--tint': safeColor(series.color) } },
+      h('div', { class: 'detail-cover wide' },
+        image(series.cover, series.title),
+        h('span', { class: 'cover-fallback' }, series.title),
+      ),
+      h('div', { class: 'detail-main' },
+        h('span', { class: 'tag' }, '短剧'),
+        h('h1', null, series.title),
+        h('div', { class: 'detail-stats' },
+          series.episodes ? h('span', null, h('b', null, series.episodes), ' 集') : null,
+          series.duration ? h('span', null, '共 ' + dur(series.duration)) : null,
+          series.playText ? h('span', null, series.playText) : null,
+        ),
+        h('p', { class: 'prose clamp3' }, trim(series.intro, 220)),
+        h('div', { class: 'detail-actions' },
+          first && first.vid ? h('a', { class: 'act primary', href: '#/watch/' + id + '/' + first.vid }, '开始播放') : null,
+          h('button', { class: 'act ghost', type: 'button', title: '分享', 'aria-label': '分享', onclick: () => share(id) }, h('i', null, 'share')),
         ),
       ),
     );
@@ -327,9 +327,9 @@ route('watch', async (/** @type {HTMLElement} */ root, /** @type {any} */ ctx) =
     }, '重试')));
   });
 
-  const composerText = h('input', { type: 'text', placeholder: '发一条弹幕…', maxLength: 40, 'aria-label': '弹幕内容' });
+  const composerText = h('input', { class: 'composer-input', type: 'text', placeholder: '发一条弹幕…', maxLength: 40, 'aria-label': '弹幕内容' });
   const composer = h('form', { class: 'dm-composer' },
-    h('div', { class: 'field label border' }, composerText, h('label', null, '弹幕')),
+    composerText,
     h('button', { class: 'act tonal', type: 'submit' }, h('i', null, 'send'), '发送'),
   );
   composer.addEventListener('submit', async (/** @type {any} */ event) => {
@@ -363,7 +363,6 @@ route('watch', async (/** @type {HTMLElement} */ root, /** @type {any} */ ctx) =
     );
     setEpisodes(videoList({ video_data: rawSeries }));
     extra.append(composer, commentPanel(seriesId, vid));
-    ctx.title(series.title || '播放');
     await loadVideo();
     pushHistory({ id: 'watch:' + vid, bookId: seriesId, itemId: vid, title: series.title, cover: series.cover, kind: 'series' });
   } catch (err) {
@@ -584,10 +583,10 @@ route('audio', async (/** @type {HTMLElement} */ root, /** @type {any} */ ctx) =
     detail = detailData.data || {};
     const book = bookOf(detail);
     toc = (dirData && dirData.data && dirData.data.item_data_list) || [];
-    ctx.title(book.name || '听书');
+    ctx.title('听书');
     clear(head);
     head.append(
-      h('div', null, book.cover ? image(book.cover, book.name) : h('div', { class: 'skeleton', style: { width: '132px', height: '132px' } })),
+      h('div', { class: 'audio-cover' }, image(book.cover, book.name), h('span', { class: 'cover-fallback' }, book.name)),
       h('div', { class: 'max' },
         h('h1', null, book.name || '听书'),
         h('div', { class: 'muted' }, book.author),

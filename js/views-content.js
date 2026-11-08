@@ -1,8 +1,8 @@
 // 首页、搜索、分类、书籍详情、阅读器
 import {
-  api, msg, h, clear, qs, route, go, render, bookOf, seriesOf, commentOf, commentView, commentList,
+  api, msg, h, clear, qs, route, go, render, bookOf, seriesOf, commentOf, commentView, commentList, seriesRow,
   paragraphsOf, shelf, bookCard, seriesCard, image, emptyState, errorState,
-  loadingShelf, toast, openDialog, num, words, trim, safeColor, readStore, writeStore,
+  loadingShelf, toast, openDialog, openSheet, num, words, trim, safeColor, readStore, writeStore,
   inShelf, toggleShelf, pushHistory, progressOf, saveProgress, cfg, saveConfig, copy,
 } from './core.js';
 
@@ -62,10 +62,9 @@ route('home', async (/** @type {HTMLElement} */ root, /** @type {any} */ ctx) =>
     h('div', { class: 'grow' },
       h('h1', null, greeting()),
       h('p', null, '把故事读到最后一页。今天想读点什么？') ),
-    h('a', { class: 'act ghost small', href: '#/search' }, h('i', null, 'search'), '搜索'),
   ));
 
-  const tabsHost = h('div', { class: 'chip-row nowrap', role: 'tablist', 'aria-label': '频道' });
+  const tabsHost = h('div', { class: 'tabs-line home-tabs', role: 'tablist', 'aria-label': '内容频道' });
   const body = h('div', null, loadingShelf());
   root.append(tabsHost, body);
 
@@ -116,9 +115,8 @@ route('home', async (/** @type {HTMLElement} */ root, /** @type {any} */ ctx) =>
   const hero = (book) => {
     const chapter = book.raw && book.raw.first_chapter_item_id;
     return h('section', { class: 'hero', style: { '--tint': safeColor(book.color) } },
-      h('div', { class: 'hero-shape' }),
       h('div', { class: 'hero-copy' },
-        h('div', { class: 'hero-kicker' }, h('i', null, 'local_fire_department'), '今日主推'),
+        h('div', { class: 'hero-kicker' }, '今日主推'),
         h('h1', null, book.name),
         h('div', { class: 'hero-meta' },
           book.author ? h('span', null, book.author) : null,
@@ -132,7 +130,7 @@ route('home', async (/** @type {HTMLElement} */ root, /** @type {any} */ ctx) =>
           chapter
             ? h('a', { class: 'act primary', href: '#/read/' + book.id + '/' + chapter }, h('i', null, 'play_arrow'), '开始阅读')
             : h('a', { class: 'act primary', href: '#/book/' + book.id }, h('i', null, 'menu_book'), '查看详情'),
-          h('a', { class: 'act ghost', href: '#/book/' + book.id }, h('i', null, 'info'), '书籍详情'),
+          h('a', { class: 'act text', href: '#/book/' + book.id }, '查看详情', h('i', null, 'chevron_right')),
         ),
       ),
       h('a', { class: 'hero-cover', href: '#/book/' + book.id, 'aria-label': book.name }, image(book.cover, book.name), h('span', { class: 'cover-fallback' }, book.name)),
@@ -187,23 +185,43 @@ route('home', async (/** @type {HTMLElement} */ root, /** @type {any} */ ctx) =>
     if (!tabs.length) throw new Error('首页没有返回任何频道');
     const sid = tabs[0].session_id;
     if (sid) sessionStorage.setItem('fq.home.sid', sid);
-    const chosen = activeTab(active);
+    const wanted = ['推荐', '小说', '听书', '看剧', '漫画', '短篇'];
+    const visible = wanted.map((title) => tabs.find((tab) => tab.title === title)).filter(Boolean);
+    const base = visible.length >= 3 ? visible : tabs.slice(0, 6);
+    const requested = ctx.query.get('tab');
+    const requestedTab = requested ? tabs.find((tab) => tab.title === requested) : null;
+    const chosen = requestedTab || base.find((tab) => Number(tab.tab_type) === Number(active)) || base[0];
+    const picked = base.includes(chosen) ? base : [chosen, ...base];
     active = Number(chosen.tab_type);
-    for (const tab of tabs) {
+    /** @param {HTMLElement|null} button */
+    const center = (button) => {
+      if (!button) return;
+      const left = button.offsetLeft - tabsHost.offsetLeft - (tabsHost.clientWidth - button.offsetWidth) / 2;
+      tabsHost.scrollTo({ left: Math.max(0, left), behavior: 'smooth' });
+    };
+    let activeButton = null;
+    for (const tab of picked) {
       const button = h('button', {
-        class: 'chip' + (Number(tab.tab_type) === active ? ' active' : ''),
+        class: 'tab' + (Number(tab.tab_type) === active ? ' active' : ''),
         type: 'button', role: 'tab',
+        'aria-selected': Number(tab.tab_type) === active ? 'true' : 'false',
         onclick: () => {
           active = Number(tab.tab_type);
           sessionStorage.setItem('fq.home.tab', String(active));
-          for (const node of tabsHost.children) node.classList.toggle('active', node === button);
+          for (const node of tabsHost.children) {
+            node.classList.toggle('active', node === button);
+            node.setAttribute('aria-selected', node === button ? 'true' : 'false');
+          }
+          center(button);
           const target = activeTab(active);
           if (target.cell_data && target.cell_data.length) renderTab(target);
           else loadTab(target, 0);
         },
       }, tab.title || '频道');
+      if (Number(tab.tab_type) === active) activeButton = button;
       tabsHost.append(button);
     }
+    requestAnimationFrame(() => center(activeButton));
     if (chosen.cell_data && chosen.cell_data.length) renderTab(chosen);
     else await loadTab(chosen, 0);
   } catch (err) {
@@ -233,10 +251,9 @@ function rankGrid(books) {
 
 route('search', async (/** @type {HTMLElement} */ root, /** @type {any} */ ctx) => {
   const q = (ctx.query.get('q') || '').trim();
-  ctx.title(q ? '搜索 · ' + q : '搜索');
-  const head = h('section', { class: 'search-hero' },
-    h('h1', null, q ? '搜索结果' : '搜索'),
-    h('p', null, q ? '“' + q + '”' : '书名、作者、角色，甚至一句台词。'),
+  ctx.title('搜索');
+  const head = h('section', { class: 'search-head' },
+    h('p', null, q ? '“' + q + '” 的搜索结果' : '书名、作者、角色，甚至一句台词。'),
   );
   const form = h('form', { class: 'search-big', role: 'search' },
     h('i', null, 'search'),
@@ -256,7 +273,7 @@ route('search', async (/** @type {HTMLElement} */ root, /** @type {any} */ ctx) 
   if (!q) { await landing(root, ctx); return; }
 
   rememberSearch(q);
-  const tabsHost = h('div', { class: 'chip-row nowrap result-tabs', role: 'tablist' });
+  const tabsHost = h('div', { class: 'tabs-line result-tabs', role: 'tablist' });
   const summary = h('div', { class: 'result-summary' });
   const body = h('div', null, loadingShelf());
   root.append(tabsHost, summary, body);
@@ -274,7 +291,7 @@ route('search', async (/** @type {HTMLElement} */ root, /** @type {any} */ ctx) 
       if (!append) body.append(emptyState({ icon: 'search_off', title: '没有找到结果', text: '换个关键词，或试试其他分类。', action: h('button', { class: 'act tonal', type: 'button', onclick: () => go('#/search') }, '返回搜索') }));
       return;
     }
-    if (series.length) body.append(h('section', { class: 'shelf' }, h('div', { class: 'section-head' }, h('h2', null, '相关短剧')), h('div', { class: 'grid-series' }, series.map(seriesCard))));
+    if (series.length) body.append(h('section', { class: 'shelf' }, h('div', { class: 'section-head' }, h('h2', null, '相关短剧'), h('span', null, series.length + ' 部')), h('div', { class: 'series-list' }, series.map(seriesRow))));
     if (books.length) body.append(h('section', { class: 'shelf' }, h('div', { class: 'section-head' }, h('h2', null, '相关作品'), h('span', null, books.length + ' 本')), bookGrid(books)));
     if (tab.has_more) {
       body.append(h('div', { class: 'toc-more' }, h('button', { class: 'act tonal', type: 'button', onclick: () => load(active, true) }, h('i', null, 'expand_more'), '加载更多')));
@@ -296,7 +313,7 @@ route('search', async (/** @type {HTMLElement} */ root, /** @type {any} */ ctx) 
       renderTabs();
       summary.replaceChildren(h('i', null, 'travel_explore'), '共 ' + tabs.reduce((/** @type {any} */ sum, /** @type {any} */ t) => sum + ((t.data && t.data.length) || 0), 0) + ' 条结果');
       renderTab(tab, append);
-      const alt = h('button', { class: 'act ghost small', type: 'button', onclick: () => loadFanqie(q, body) }, h('i', null, 'cloud'), '备用搜索源');
+      const alt = h('button', { class: 'act text small', type: 'button', onclick: () => loadFanqie(q, body) }, '备用搜索源', h('i', null, 'chevron_right'));
       summary.append(alt);
     } catch (err) {
       if (err instanceof DOMException && err.name === 'AbortError') return;
@@ -312,7 +329,7 @@ route('search', async (/** @type {HTMLElement} */ root, /** @type {any} */ ctx) 
     for (const tab of tabs) {
       if (!tab.data || !tab.data.length) continue;
       tabsHost.append(h('button', {
-        class: 'chip' + (Number(tab.tab_type) === active ? ' active' : ''), type: 'button', role: 'tab',
+        class: 'tab' + (Number(tab.tab_type) === active ? ' active' : ''), type: 'button', role: 'tab',
         onclick: () => { active = Number(tab.tab_type); sessionStorage.setItem('fq.search.tab', String(active)); load(active); },
       }, tab.title || '综合'));
     }
@@ -399,14 +416,17 @@ route('category', async (/** @type {HTMLElement} */ root, /** @type {any} */ ctx
   ctx.title('发现');
   let tab = Number(sessionStorage.getItem('fq.category.tab') || 1);
   const head = h('section', { class: 'page-head' },
-    h('div', { class: 'grow' }, h('h1', null, '发现'), h('p', null, '按频道和题材，找到下一本让你熬夜的书。')),
+    h('div', { class: 'grow' }, h('p', null, '按频道和题材，找到下一本让你熬夜的书。')),
   );
   const tabs = h('div', { class: 'chip-row' },
     h('button', { class: 'chip active', type: 'button', onclick: () => set(1) }, '男频'),
     h('button', { class: 'chip', type: 'button', onclick: () => set(2) }, '女频'),
   );
+  const more = h('div', { class: 'chip-row' },
+    ['经典', '知识', '新书', '商城', '视频'].map((title) => h('a', { class: 'chip', href: '#/?tab=' + encodeURIComponent(title) }, title)),
+  );
   const grid = h('div', { class: 'category-grid' });
-  root.append(head, tabs, h('div', { class: 'shelf' }, h('div', { class: 'section-head' }, h('h2', null, '全部题材')), grid));
+  root.append(head, tabs, h('div', { class: 'shelf' }, h('div', { class: 'section-head' }, h('h2', null, '更多频道'), h('span', null, '首页栏目')), more), h('div', { class: 'shelf' }, h('div', { class: 'section-head' }, h('h2', null, '全部题材')), grid));
 
   /** @param {number} next */
   async function set(next) {
@@ -452,7 +472,7 @@ route('book', async (/** @type {HTMLElement} */ root, /** @type {any} */ ctx) =>
   let directory = null;
   let shown = 0;
   const panels = h('div', { class: 'panel' });
-  const tabRow = h('div', { class: 'chip-row result-tabs' });
+  const tabRow = h('div', { class: 'tabs-line detail-tabs' });
 
   const firstItem = () => (book && book.first) || (detail && detail.first_chapter_item_id) || '';
   const progress = () => progressOf(id);
@@ -466,35 +486,28 @@ route('book', async (/** @type {HTMLElement} */ root, /** @type {any} */ ctx) =>
   function renderHero() {
     const saved = progress();
     const status = Number(book.status) === 1 ? '已完结' : '连载中';
-    const score = Number(book.score);
-    const ring = Number.isFinite(score) && score > 0
-      ? h('div', { class: 'score-ring', style: { '--score': String(Math.min(100, score * 10)) }, title: '评分 ' + book.score },
-        h('div', null, h('strong', null, book.score), h('span', null, '评分')))
-      : null;
-    return h('section', { class: 'detail-hero', style: { '--tint': safeColor(book.color) } },
-      h('div', { class: 'detail-top' },
-        coverBox(book),
-        h('div', { class: 'detail-main' },
-          h('h1', null, book.name),
-          book.authorId
-            ? h('a', { class: 'detail-author', href: '#/author/' + encodeURIComponent(String(book.authorId)) }, h('i', null, 'person'), book.author || '佚名')
-            : h('span', { class: 'detail-author' }, h('i', null, 'person'), book.author || '佚名'),
-          h('div', { class: 'detail-stats' },
-            book.score ? h('span', null, h('b', null, book.score), ' 分') : null,
-            book.readText ? h('span', null, book.readText) : null,
-            book.words ? h('span', null, h('b', null, words(book.words))) : null,
-            book.chapters ? h('span', null, h('b', null, book.chapters), ' 章') : null,
-            h('span', { class: 'tag primary' }, status),
+    return h('section', { class: 'detail-panel', style: { '--tint': safeColor(book.color) } },
+      coverBox(book),
+      h('div', { class: 'detail-main' },
+        h('h1', null, book.name),
+        book.authorId
+          ? h('a', { class: 'detail-author', href: '#/author/' + encodeURIComponent(String(book.authorId)) }, h('i', null, 'person'), book.author || '佚名')
+          : h('span', { class: 'detail-author' }, h('i', null, 'person'), book.author || '佚名'),
+        h('div', { class: 'detail-stats' },
+          book.score ? h('span', null, h('b', null, book.score), ' 分') : null,
+          book.readText ? h('span', null, book.readText) : null,
+          book.words ? h('span', null, words(book.words)) : null,
+          book.chapters ? h('span', null, book.chapters + ' 章') : null,
+          h('span', null, status),
+        ),
+        h('div', { class: 'detail-actions' },
+          h('a', { class: 'act primary', href: readHref() }, saved ? '继续阅读' : '开始阅读'),
+          h('button', { class: 'act tonal', type: 'button', onclick: onShelf }, inShelf(book) ? '已在书架' : '加入书架'),
+          h('div', { class: 'detail-icons' },
+            h('a', { class: 'act ghost', href: '#/audio/' + id, title: '听书', 'aria-label': '听书' }, h('i', null, 'headphones')),
+            h('button', { class: 'act ghost', type: 'button', title: '分享', 'aria-label': '分享', onclick: share }, h('i', null, 'share')),
+            detail.forum_id && detail.author_id ? h('button', { class: 'act ghost', type: 'button', title: '圈子', 'aria-label': '圈子', onclick: forum }, h('i', null, 'groups')) : null,
           ),
-          h('div', { class: 'detail-actions' },
-            h('a', { class: 'act primary', href: readHref() }, h('i', null, 'menu_book'), saved ? '继续阅读' : '开始阅读'),
-            h('button', { class: 'act tonal', type: 'button', onclick: onShelf }, h('i', null, inShelf(book) ? 'bookmark_added' : 'bookmark_add'), inShelf(book) ? '已在书架' : '加入书架'),
-            h('a', { class: 'act ghost hide-s', href: '#/audio/' + id }, h('i', null, 'headphones'), '听书'),
-            h('button', { class: 'act ghost hide-s', type: 'button', onclick: share }, h('i', null, 'share'), '分享'),
-            detail.forum_id && detail.author_id ? h('button', { class: 'act ghost hide-s', type: 'button', onclick: forum }, h('i', null, 'groups'), '圈子') : null,
-            h('a', { class: 'act ghost hide-s', href: '#/book/' + id + '/reviews' }, h('i', null, 'reviews'), '书评'),
-          ),
-          ring,
         ),
       ),
     );
@@ -503,7 +516,7 @@ route('book', async (/** @type {HTMLElement} */ root, /** @type {any} */ ctx) =>
   function onShelf() {
     const added = toggleShelf(book);
     toast(added ? '已加入书架' : '已移出书架');
-    const hero = qs('.detail-hero', shell);
+    const hero = qs('.detail-panel', shell);
     if (hero) hero.replaceWith(renderHero());
   }
 
@@ -543,7 +556,7 @@ route('book', async (/** @type {HTMLElement} */ root, /** @type {any} */ ctx) =>
     clear(tabRow);
     for (const [key, label] of [['about', '简介'], ['toc', '目录'], ['reviews', '书评'], ['comments', '点评'], ['related', '相关']]) {
       tabRow.append(h('button', {
-        class: 'chip' + (panel === key ? ' active' : ''), type: 'button',
+        class: 'tab' + (panel === key ? ' active' : ''), type: 'button',
         onclick: () => { panel = key; renderTabs(); drawPanel(); },
       }, label));
     }
@@ -560,18 +573,12 @@ route('book', async (/** @type {HTMLElement} */ root, /** @type {any} */ ctx) =>
 
   function drawAbout() {
     panels.append(h('div', { class: 'prose' }, book.abstract || '这本书还没有简介。'));
-    const info = h('div', { class: 'info-grid' });
-    const rows = [
-      ['题材', book.category], ['标签', book.tags.join(' / ')], ['字数', book.words ? words(book.words) : ''],
-      ['章节', book.chapters ? book.chapters + ' 章' : ''], ['状态', Number(book.status) === 1 ? '已完结' : '连载中'],
-      ['最近更新', book.lastChapter || ''],
-    ];
-    for (const [label, value] of rows) {
-      if (!value) continue;
-      info.append(h('div', { class: 'info-cell' }, h('span', null, label), h('strong', null, value)));
+    if (book.tags.length) {
+      panels.append(h('div', { class: 'tag-row' }, book.tags.map((/** @type {any} */ tag) => h('span', { class: 'tag' }, tag))));
     }
-    panels.append(info);
-    if (book.tags.length) panels.append(h('div', { class: 'chip-row', style: { marginTop: '16px' } }, book.tags.map((/** @type {any} */ tag) => h('span', { class: 'chip' }, tag))));
+    if (book.lastChapter) {
+      panels.append(h('div', { class: 'muted tiny', style: { marginTop: '14px' } }, '最近更新 · ' + book.lastChapter));
+    }
   }
 
   async function drawToc() {
@@ -669,9 +676,9 @@ route('book', async (/** @type {HTMLElement} */ root, /** @type {any} */ ctx) =>
     book.first = detail.first_chapter_item_id;
     book.authorId = detail.author_id;
     book.lastChapter = detail.last_chapter_title;
-    ctx.title(book.name);
+    ctx.title('书籍');
     clear(shell);
-    shell.append(renderHero(), tabRow, panels);
+    shell.append(h('div', { class: 'detail-page' }, renderHero(), tabRow, panels));
     renderTabs();
     drawPanel();
   } catch (err) {
@@ -817,21 +824,39 @@ route('read', async (/** @type {HTMLElement} */ root, /** @type {any} */ ctx) =>
   }
 
   function openSettings() {
-    const scale = h('input', { type: 'range', min: '0.85', max: '1.35', step: '0.05', value: String(cfg.scale) });
-    const line = h('input', { type: 'range', min: '1.6', max: '2.3', step: '0.1', value: String(cfg.line) });
+    const scale = h('input', { type: 'range', min: '0.85', max: '1.35', step: '0.05', value: String(cfg.scale), 'aria-label': '字号' });
+    const line = h('input', { type: 'range', min: '1.6', max: '2.3', step: '0.1', value: String(cfg.line), 'aria-label': '行距' });
+    const scaleOut = h('span', { class: 'range-value' }, Math.round(cfg.scale * 100) + '%');
+    const lineOut = h('span', { class: 'range-value' }, cfg.line.toFixed(1));
+    const swatches = h('div', { class: 'paper-options' });
+    const drawSwatches = () => {
+      clear(swatches);
+      for (const [key, label, color] of [['paper', '纸', '#F7F2E8'], ['green', '护眼', '#E9F0E4'], ['night', '夜', '#11100E']]) {
+        swatches.append(h('button', {
+          class: 'paper-option' + (cfg.paper === key ? ' active' : ''), type: 'button',
+          onclick: () => { cfg.paper = key; saveConfig({ paper: key }); applyReaderStyle(); drawSwatches(); },
+        }, h('span', { class: 'paper-dot', style: { background: color } }), label));
+      }
+    };
+    drawSwatches();
     const body = h('div', null,
-      h('div', { class: 'setting-row' }, h('div', null, h('strong', null, '字号'), h('small', null, '正文大小')), scale),
-      h('div', { class: 'setting-row' }, h('div', null, h('strong', null, '行距'), h('small', null, '段落的呼吸感')), line),
-      h('div', { class: 'setting-row' }, h('div', null, h('strong', null, '纸面'), h('small', null, '阅读背景')), h('div', { class: 'chip-row' },
-        ['paper', 'green', 'night'].map((/** @type {any} */ paperName) => h('button', {
-          class: 'chip' + (cfg.paper === paperName ? ' active' : ''), type: 'button',
-          onclick: () => { cfg.paper = paperName; saveConfig({ paper: paperName }); applyReaderStyle(); },
-        }, paperName === 'paper' ? '纸' : paperName === 'green' ? '护眼' : '夜')),
-      )),
+      h('div', { class: 'range-row' }, h('label', null, '字号'), scale, scaleOut),
+      h('div', { class: 'range-row' }, h('label', null, '行距'), line, lineOut),
+      h('div', { class: 'range-row' }, h('label', null, '纸面'), swatches),
     );
-    scale.addEventListener('input', () => { cfg.scale = Number(scale.value); saveConfig({ scale: cfg.scale }); applyReaderStyle(); });
-    line.addEventListener('input', () => { cfg.line = Number(line.value); saveConfig({ line: cfg.line }); applyReaderStyle(); });
-    openDialog({ title: '阅读设置', body, actions: [{ label: '完成', value: 'ok', primary: true }] });
+    scale.addEventListener('input', () => {
+      cfg.scale = Number(scale.value);
+      scaleOut.textContent = Math.round(cfg.scale * 100) + '%';
+      saveConfig({ scale: cfg.scale });
+      applyReaderStyle();
+    });
+    line.addEventListener('input', () => {
+      cfg.line = Number(line.value);
+      lineOut.textContent = cfg.line.toFixed(1);
+      saveConfig({ line: cfg.line });
+      applyReaderStyle();
+    });
+    openSheet({ title: '阅读设置', body });
   }
 
   // scroll progress

@@ -28,7 +28,7 @@ function rankBooks(data) {
 route('rank', async (/** @type {HTMLElement} */ root, /** @type {any} */ ctx) => {
   const id = ctx.params[0] || '';
   ctx.title('榜单');
-  const head = h('section', { class: 'page-head' }, h('div', { class: 'grow' }, h('h1', null, '榜单'), h('p', null, '按热度与口碑排序。')));
+  const head = h('section', { class: 'page-head' }, h('div', { class: 'grow' }, h('p', null, '按热度与口碑排序。')));
   const body = h('div', null, loadingShelf(4));
   root.append(head, body);
 
@@ -88,7 +88,7 @@ route('author', async (/** @type {HTMLElement} */ root, /** @type {any} */ ctx) 
     const author = data.author_info || data;
     const name = author.user_name || author.author_name || author.name || first.author || '作者';
     const avatar = author.expand_user_avatar || author.avatar_url || first.avatar_url || '';
-    ctx.title(name);
+    ctx.title('作者');
     clear(body);
     body.append(
       h('section', { class: 'page-head' },
@@ -141,7 +141,7 @@ route('shuqi', async (/** @type {HTMLElement} */ root, /** @type {any} */ ctx) =
     if (value) go('#/shuqi?q=' + encodeURIComponent(value));
   });
   const body = h('div', null);
-  root.append(h('section', { class: 'page-head' }, h('div', { class: 'grow' }, h('h1', null, '书旗'), h('p', null, '独立于番茄的第二个书源。'))), form, body);
+  root.append(h('section', { class: 'page-head' }, h('div', { class: 'grow' }, h('p', null, '独立于番茄的第二个书源。'))), form, body);
   if (!q) { body.append(emptyState({ icon: 'storefront', title: '搜一本书', text: '书旗源不需要番茄设备身份，适合做备用书源。' })); return; }
   body.append(loadingShelf(4));
   try {
@@ -172,25 +172,26 @@ async function shuqiBook(root, ctx, bookId) {
     ]);
     const book = bookData.data || {};
     chapters = (tocData.data && tocData.data.chapters) || [];
-    ctx.title(book.name || '书旗');
+    ctx.title('书旗');
     clear(body);
-    body.append(h('section', { class: 'detail-hero', style: { '--tint': '#1F6F5C' } },
-      h('div', { class: 'detail-top' },
-        h('div', { class: 'detail-cover' }, image(book.coverUrl || '', book.name || '')),
-        h('div', { class: 'detail-main' },
-          h('span', { class: 'tag' }, '书旗 · ' + (book.status || '')),
-          h('h1', { style: { marginTop: '8px' } }, book.name || ''),
-          h('div', { class: 'detail-author' }, h('i', null, 'person'), book.author || ''),
-          h('div', { class: 'detail-stats' },
-            book.chapterTotalNum ? h('span', null, h('b', null, book.chapterTotalNum), ' 章') : null,
-            book.wordCount ? h('span', null, book.wordCount) : null,
-            book.kind ? h('span', null, String(book.kind).split(',').slice(0, 3).join(' · ')) : null,
-          ),
-          h('p', { class: 'prose' }, trim(book.intro || '', 240)),
-          h('div', { class: 'detail-actions' },
-            chapters.length ? h('a', { class: 'act primary', href: '#/shuqi-read/' + bookId + '/' + chapters[0].chapterId }, h('i', null, 'menu_book'), '开始阅读') : null,
-            h('button', { class: 'act ghost', type: 'button', onclick: () => copy(location.href) }, h('i', null, 'link'), '复制链接'),
-          ),
+    body.append(h('section', { class: 'detail-panel' },
+      h('div', { class: 'detail-cover' },
+        image(book.coverUrl || '', book.name || ''),
+        h('span', { class: 'cover-fallback' }, book.name || '书旗'),
+      ),
+      h('div', { class: 'detail-main' },
+        h('span', { class: 'tag' }, '书旗 · ' + (book.status || '')),
+        h('h1', null, book.name || ''),
+        h('div', { class: 'detail-author' }, h('i', null, 'person'), book.author || ''),
+        h('div', { class: 'detail-stats' },
+          book.chapterTotalNum ? h('span', null, h('b', null, book.chapterTotalNum), ' 章') : null,
+          book.wordCount ? h('span', null, book.wordCount) : null,
+          book.kind ? h('span', null, String(book.kind).split(',').slice(0, 3).join(' · ')) : null,
+        ),
+        h('p', { class: 'prose clamp3' }, trim(book.intro || '', 240)),
+        h('div', { class: 'detail-actions' },
+          chapters.length ? h('a', { class: 'act primary', href: '#/shuqi-read/' + bookId + '/' + chapters[0].chapterId }, '开始阅读') : null,
+          h('button', { class: 'act ghost', type: 'button', title: '复制链接', 'aria-label': '复制链接', onclick: () => copy(location.href) }, h('i', null, 'link')),
         ),
       ),
     ));
@@ -275,7 +276,7 @@ route('shelf', async (/** @type {HTMLElement} */ root, /** @type {any} */ ctx) =
   ctx.title('书架');
   const items = shelfItems();
   root.append(h('section', { class: 'page-head' },
-    h('div', { class: 'grow' }, h('h1', null, '书架'), h('p', null, '收藏保存在这台设备上。')),
+    h('div', { class: 'grow' }, h('p', null, '收藏保存在这台设备上。')),
     items.length ? h('button', { class: 'act ghost small', type: 'button', onclick: clearShelf }, h('i', null, 'delete'), '清空') : null,
   ));
   if (!items.length) {
@@ -309,7 +310,7 @@ route('history', async (/** @type {HTMLElement} */ root, /** @type {any} */ ctx)
   ctx.title('足迹');
   const items = historyItems();
   root.append(h('section', { class: 'page-head' },
-    h('div', { class: 'grow' }, h('h1', null, '足迹'), h('p', null, '最近读过的书、看过的剧。')),
+    h('div', { class: 'grow' }, h('p', null, '最近读过的书、看过的剧。')),
     items.length ? h('button', { class: 'act ghost small', type: 'button', onclick: async () => {
       if (!(await confirmDialog('清空足迹？', '只删除本机记录。', '清空'))) return;
       writeStore('history', []);
@@ -351,7 +352,6 @@ function labelOf(kind) {
 route('settings', async (/** @type {HTMLElement} */ root, /** @type {any} */ ctx) => {
   ctx.title('设置');
   root.append(h('section', { class: 'page-head' }, h('div', { class: 'grow' },
-    h('h1', null, '设置'),
     h('p', null, '服务器、令牌和阅读偏好。令牌与偏好只保存在这台设备。'),
   )));
 
@@ -365,8 +365,8 @@ route('settings', async (/** @type {HTMLElement} */ root, /** @type {any} */ ctx
   const serverCard = h('div', { class: 'card' },
     h('h2', null, '服务器'),
     h('p', { class: 'hint' }, '默认走当前页面同源的 Rust 反代（/api、/src）。也可以填 http://host:18921 直连。'),
-    h('div', { class: 'field label border' }, baseInput, h('label', null, 'API 地址')),
-    h('div', { class: 'field label border' }, tokenInput, h('label', null, '访问令牌')),
+    h('div', { class: 'field' }, baseInput, h('label', null, 'API 地址')),
+    h('div', { class: 'field' }, tokenInput, h('label', null, '访问令牌')),
     status,
     h('div', { class: 'chip-row', style: { marginTop: '14px' } },
       h('button', { class: 'act primary', type: 'button', onclick: saveServer }, h('i', null, 'save'), '保存'),
@@ -382,23 +382,18 @@ route('settings', async (/** @type {HTMLElement} */ root, /** @type {any} */ ctx
       onclick: () => { saveConfig({ theme: mode }); refreshThemeChips(); },
     }, mode === 'auto' ? '跟随系统' : mode === 'dark' ? '深色' : '浅色')),
   );
-  const accentRow = h('div', { class: 'swatches' },
-    ['tomato', 'matcha', 'ocean'].map((/** @type {any} */ accent) => h('button', {
-      class: 'swatch ' + accent + (cfg.accent === accent ? ' active' : ''), type: 'button', 'aria-label': accent,
-      onclick: () => { saveConfig({ accent }); refreshAccent(); },
-    })),
-  );
-  const scale = h('input', { type: 'range', min: '0.85', max: '1.35', step: '0.05', value: String(cfg.scale) });
-  const line = h('input', { type: 'range', min: '1.6', max: '2.3', step: '0.1', value: String(cfg.line) });
-  scale.addEventListener('input', () => saveConfig({ scale: Number(scale.value) }));
-  line.addEventListener('input', () => saveConfig({ line: Number(line.value) }));
+  const scale = h('input', { type: 'range', min: '0.85', max: '1.35', step: '0.05', value: String(cfg.scale), 'aria-label': '正文字号' });
+  const line = h('input', { type: 'range', min: '1.6', max: '2.3', step: '0.1', value: String(cfg.line), 'aria-label': '行距' });
+  const scaleOut = h('span', { class: 'range-value' }, Math.round(cfg.scale * 100) + '%');
+  const lineOut = h('span', { class: 'range-value' }, cfg.line.toFixed(1));
+  scale.addEventListener('input', () => { scaleOut.textContent = Math.round(Number(scale.value) * 100) + '%'; saveConfig({ scale: Number(scale.value) }); });
+  line.addEventListener('input', () => { lineOut.textContent = Number(line.value).toFixed(1); saveConfig({ line: Number(line.value) }); });
   const lookCard = h('div', { class: 'card' },
     h('h2', null, '外观'),
-    h('p', { class: 'hint' }, '三套取色、亮暗双主题；阅读器另有纸面设置。'),
+    h('p', { class: 'hint' }, '亮暗双主题，番茄红作为唯一强调色；阅读器另有纸面设置。'),
     h('div', { class: 'setting-row' }, h('div', null, h('strong', null, '深浅色'), h('small', null, '可跟随系统')), themeRow),
-    h('div', { class: 'setting-row' }, h('div', null, h('strong', null, '主题色'), h('small', null, '番茄 / 青梅 / 海盐')), accentRow),
-    h('div', { class: 'setting-row' }, h('div', null, h('strong', null, '正文字号'), h('small', null, '阅读器默认')), scale),
-    h('div', { class: 'setting-row' }, h('div', null, h('strong', null, '行距'), h('small', null, '阅读器默认')), line),
+    h('div', { class: 'setting-row' }, h('div', null, h('strong', null, '正文字号'), h('small', null, '阅读器默认')), h('div', { class: 'settings-range' }, scale, scaleOut)),
+    h('div', { class: 'setting-row' }, h('div', null, h('strong', null, '行距'), h('small', null, '阅读器默认')), h('div', { class: 'settings-range' }, line, lineOut)),
   );
 
   /* shortcuts */
@@ -430,9 +425,6 @@ route('settings', async (/** @type {HTMLElement} */ root, /** @type {any} */ ctx
 
   function refreshThemeChips() {
     Array.from(themeRow.children).forEach((node, index) => node.classList.toggle('active', ['auto', 'light', 'dark'][index] === cfg.theme));
-  }
-  function refreshAccent() {
-    Array.from(accentRow.children).forEach((/** @type {any} */ node) => node.classList.toggle('active', node.classList.contains(cfg.accent)));
   }
 
   function saveServer() {
@@ -515,7 +507,7 @@ route('account', async (/** @type {HTMLElement} */ root, /** @type {any} */ ctx)
   }
 
   root.append(
-    h('section', { class: 'page-head' }, h('div', { class: 'grow' }, h('h1', null, '账号采集'), h('p', null, '读取你自己的番茄书架与阅读历史。'))),
+    h('section', { class: 'page-head' }, h('div', { class: 'grow' }, h('p', null, '读取你自己的番茄书架与阅读历史。'))),
     h('div', { class: 'account-warn' },
       h('i', null, 'shield'),
       h('div', null, h('strong', null, '这是把账号 Cookie 交给服务器的操作。'), h('div', null, '本项目是远程服务：Cookie 会离开这台设备。入口默认放在这里而不是首页，就是希望你先看清这句话。Cookie 不写入 localStorage，刷新即失。')),
@@ -524,14 +516,14 @@ route('account', async (/** @type {HTMLElement} */ root, /** @type {any} */ ctx)
       h('div', { class: 'card' },
         h('h2', null, '读取书架'),
         h('p', { class: 'hint' }, '服务端只会转发 9 个白名单只读 RPC。'),
-        h('div', { class: 'field label border' }, cookie, h('label', null, 'Cookie')),
-        h('div', { class: 'field label border' }, resource, h('label', null, 'resource')),
+        h('div', { class: 'field' }, cookie, h('label', null, 'Cookie')),
+        h('div', { class: 'field' }, resource, h('label', null, 'resource')),
         h('div', { class: 'chip-row' }, h('button', { class: 'act primary', type: 'button', onclick: library }, h('i', null, 'menu_book'), '读取书架')),
       ),
       h('div', { class: 'card' },
         h('h2', null, '阅读历史'),
         h('p', { class: 'hint' }, '只读，不分页大小；offset 控制起点。'),
-        h('div', { class: 'field label border' }, offset, h('label', null, 'offset')),
+        h('div', { class: 'field' }, offset, h('label', null, 'offset')),
         h('div', { class: 'chip-row' }, h('button', { class: 'act tonal', type: 'button', onclick: history }, h('i', null, 'history'), '读取历史')),
         h('div', { class: 'tiny muted', style: { marginTop: '14px' } }, '结果原样展示上游 JSON。服务端不会把 Cookie 写进日志。'),
       ),
@@ -616,7 +608,7 @@ const ENDPOINTS = [
 route('dev', async (/** @type {HTMLElement} */ root, /** @type {any} */ ctx) => {
   ctx.title('接口实验室');
   root.append(h('section', { class: 'page-head' },
-    h('div', { class: 'grow' }, h('h1', null, '接口实验室'), h('p', null, '全部 51 个端点、65 条路径的直达入口。响应原样展示，包括 404 死路由。')),
+    h('div', { class: 'grow' }, h('p', null, '全部 51 个端点、65 条路径的直达入口。响应原样展示，包括 404 死路由。')),
     h('span', { class: 'tag' }, ENDPOINTS.length + ' 条'),
   ));
   const wrap = h('div', { class: 'dev-list' });
@@ -642,12 +634,12 @@ function devItem(ep) {
   for (const key of placeholders) {
     const input = h('input', { type: 'text', placeholder: key, 'aria-label': key });
     fields[key] = input;
-    inputs.append(h('div', { class: 'field label border' }, input, h('label', null, key)));
+    inputs.append(h('div', { class: 'field' }, input, h('label', null, key)));
   }
   for (const key of (ep.q || []).filter((/** @type {any} */ key) => !placeholders.includes(key))) {
     const input = h('input', { type: 'text', placeholder: key, 'aria-label': key });
     fields[key] = input;
-    inputs.append(h('div', { class: 'field label border' }, input, h('label', null, key)));
+    inputs.append(h('div', { class: 'field' }, input, h('label', null, key)));
   }
   const out = h('div', { class: 'result' });
   const body = h('div', { class: 'dev-body' }, inputs,
