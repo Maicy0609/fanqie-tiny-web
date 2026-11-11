@@ -140,7 +140,7 @@ curl -s -H "Authorization: Bearer $TOKEN" \
 ```yaml
 - run: npm ci && npm run check
 - run: cargo fmt --check --manifest-path server/Cargo.toml
-- run: cargo clippy --offline -- -D warnings --manifest-path server/Cargo.toml
+- run: cargo clippy --manifest-path server/Cargo.toml --offline -- -D warnings
 - run: python3 -m playwright install --with-deps chromium
 - run: python3 tests/smoke.py
 ```

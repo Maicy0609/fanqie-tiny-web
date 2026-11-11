@@ -51,17 +51,13 @@ curl http://127.0.0.1:18921/readyz
 ```bash
 cd fanqie-tiny-web
 cargo build --release --manifest-path server/Cargo.toml
-./target/release/fanqie-tiny-server \
+./server/target/release/fanqie-tiny-server \
   --listen 127.0.0.1:8080 \
   --api http://127.0.0.1:18921 \
   --root .
 ```
 
-如果使用仓库里已经构建的二进制：
-
-```bash
-./server/fanqie-tiny-server --listen 127.0.0.1:8080 --api http://127.0.0.1:18921 --root .
-```
+仓库不提交二进制；`cargo build` 之后才会有这个文件。
 
 打开 `http://127.0.0.1:8080`，在「设置」里填后端 token。
 
