@@ -1,5 +1,7 @@
 # 番茄小站 · fanqie-tiny-web
 
+仓库：<https://github.com/Maicy0609/fanqie-tiny-web>
+
 `fanqie-lite-api` 的 Web 客户端：小说、短剧、漫画、听书、书旗，一套 Vanilla JS + Beer CSS
 （Material 3 Expressive）界面。没有前端框架、没有构建步骤；Rust 小服务器负责静态托管与
 同源反代，所以浏览器不需要 CORS。
@@ -15,7 +17,7 @@ cargo build --release --manifest-path server/Cargo.toml
   --token change-me --data-dir ./fanqie-lite-api/data --listen 127.0.0.1:18921
 
 # 3. 启动前端（默认 http://127.0.0.1:8080）
-./server/fanqie-tiny-server \
+./server/target/release/fanqie-tiny-server \
   --listen 127.0.0.1:8080 --api http://127.0.0.1:18921 --root .
 
 # 4. 打开页面，在「设置」里填访问令牌（与 --token 一致）
@@ -52,8 +54,21 @@ js/views-misc.js        榜单/作者/书旗/书架/足迹/设置/账号/实验�
 server/src/main.rs      Rust 静态服务器 + 同源反代（单文件）
 tests/smoke.py          Playwright 全流程冒烟（假 API，不写上游）
 tests/fixtures/         冒烟固定数据
-docs/API-COVERAGE.md    端点 → 页面 → 验证状态
+docs/                   架构、前端、开发、测试、部署、交接、端点覆盖
 ```
+
+## 文档
+
+| 文档 | 内容 |
+|---|---|
+| [ARCHITECTURE](docs/ARCHITECTURE.md) | 整体架构、请求流、路由、数据层、Rust 服务器 |
+| [FRONTEND](docs/FRONTEND.md) | 设计系统、组件、页面配方、动画、Beer 注意事项 |
+| [DEVELOPMENT](docs/DEVELOPMENT.md) | 环境、启动、命令、常见任务、代码规范 |
+| [TESTING](docs/TESTING.md) | 冒烟架构、fixtures、真实接口检查、CI 建议 |
+| [DEPLOYMENT](docs/DEPLOYMENT.md) | systemd、Nginx、TLS、安全、备份、排障 |
+| [HANDOVER](docs/HANDOVER.md) | 交接清单、当前状态、技术债、代码地图 |
+| [API-COVERAGE](docs/API-COVERAGE.md) | 端点 → 页面 → 验证状态 |
+| [PLAN](docs/PLAN.md) | 早期探索与设计计划（历史） |
 
 ## 验证
 
